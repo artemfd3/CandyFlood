@@ -45,12 +45,12 @@ jobs:
           echo "Project files found:"
           ls -la
 
-      - name: Build Android APK
+       - name: Build Android APK
         env:
           BUILDOZER_ALLOW_ORG_TEST_DOMAIN: "1"
           PYTHONFORANDROID_PREREQUISITES_INSTALL_INTERACTIVE: "0"
         run: |
-          yes | buildozer -v android debug
+          buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
