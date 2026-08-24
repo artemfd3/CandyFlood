@@ -11,6 +11,8 @@ version = 1.0
 
 requirements = python3,kivy
 
+android.accept_sdk_license = True
+
 orientation = portrait
 
 fullscreen = 0
