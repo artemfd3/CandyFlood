@@ -6,92 +6,70 @@ on:
     branches:
       - main
 
-env:
-  PYTHONFORANDROID_PREREQUISITES_INSTALL_INTERACTIVE: "0"
-
 jobs:
   build-android:
     name: Build Candy.flood APK
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Получаем файлы проекта
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
-      # 2. Python
       - name: Setup Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.x"
+          python-version: "3.11"
 
-      # 3. Java 17
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
-          java-version: "17"
           distribution: "temurin"
+          java-version: "17"
 
-      # 4. Системные зависимости
-      - name: Install Linux dependencies
+      - name: Install system dependencies
         run: |
-          sudo apt update
-          sudo apt -y install \
-            automake \
-            libltdl-dev \
+          sudo apt-get update
+          sudo apt-get install -y \
+            git \
+            zip \
+            unzip \
+            autoconf \
             libtool \
             pkg-config \
             zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            cmake \
             libffi-dev \
             libssl-dev \
-            cmake
+            automake
 
-      # 5. Устанавливаем Buildozer
-         - name: Install Buildozer
+      - name: Install Buildozer
         run: |
           python -m pip install --upgrade pip
-          python -m pip install buildozer setuptools cython==0.29.34
+          python -m pip install buildozer
+          python -m pip install "cython==0.29.34"
 
-      # 6. Проверяем проект
       - name: Check project
         run: |
-          echo "=== Project files ==="
-          ls -la
-
-          echo "=== Checking main.py ==="
+          echo "Checking project files..."
           test -f main.py
-
-          echo "=== Checking buildozer.spec ==="
           test -f buildozer.spec
-
-          echo "=== Buildozer version ==="
+          echo "main.py found"
+          echo "buildozer.spec found"
           buildozer --version
 
-      # 7. Разрешаем Android SDK licenses
-      - name: Enable Android SDK license
+      - name: Check Android license setting
         run: |
-          if grep -q "^# *android.accept_sdk_license" buildozer.spec; then
-            sed -i \
-              's/^# *android.accept_sdk_license.*/android.accept_sdk_license = True/' \
-              buildozer.spec
-          elif ! grep -q "^android.accept_sdk_license" buildozer.spec; then
-            printf '\nandroid.accept_sdk_license = True\n' >> buildozer.spec
-          fi
+          grep -q "^android.accept_sdk_license = True" buildozer.spec
 
-      # 8. Предварительно скачиваем Android SDK / NDK / p4a
-      - name: Prepare Android SDK, NDK and p4a
-        run: |
-          buildozer android p4a -- --help
-
-      # 9. Собираем APK
       - name: Build Android APK
         env:
           BUILDOZER_ALLOW_ORG_TEST_DOMAIN: "1"
+          PYTHONFORANDROID_PREREQUISITES_INSTALL_INTERACTIVE: "0"
         run: |
-          touch main.py
           buildozer -v android debug
 
-      # 10. Загружаем APK в Artifacts
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
